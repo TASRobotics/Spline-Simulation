@@ -139,6 +139,21 @@ public class AutoAimController {
             }
         } 
 
+        Translation2d secondToLastPoint;
+        if(interPoints.size() > 0) {
+            secondToLastPoint = interPoints.get(0);
+        } else {
+            secondToLastPoint = new Translation2d(start.getX(), start.getY());
+        }
+
+        end = new Pose2d(end.getX(), end.getY(), new Rotation2d(end.getX() - secondToLastPoint.getX(), end.getY() - secondToLastPoint.getY()));
+
+        if(secondToLastPoint.getY() > end.getY()) {
+            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() - 30));
+        } else if(secondToLastPoint.getY() < end.getY()) {
+            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() + 30));
+        }
+
         setTarget(start, interPoints, end, mEndHeading);
     }
 

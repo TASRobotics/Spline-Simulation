@@ -139,7 +139,7 @@ public class Robot extends TimedRobot {
         if(joystick.getRawButton(1) && !wasPreviouslyPressed) {
             wasPreviouslyPressed = true;
             Pose2d currPose = controller.getField().getRobotPose();
-            controller.setTarget(currPose, AutoAimLocation.RR);
+            controller.setTarget(currPose, AutoAimLocation.MM);
             controller.enable(true);
         }
         if(!joystick.getRawButton(1)) {

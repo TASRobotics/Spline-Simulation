@@ -146,7 +146,7 @@ public class Robot extends TimedRobot {
             controller.enable(true);
         }
         if(!joystick.getRawButton(1)) {
-            wasPreviouslyPressed = false;
+            wasPreviouslyPressed = false;   
             controller.enable(false);
         }
         controller.update();

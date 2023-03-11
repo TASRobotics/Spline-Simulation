@@ -13,6 +13,8 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.ADXL345_I2C.AllAxes;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -103,20 +105,48 @@ public class AutoAimController {
      * @param startPose starting position
      * @param location desired auto aim location
      */
-    public void setTarget(Pose2d startPose, AutoAimLocation location) {
-        boolean longPath = startPose.getX() > 2.85;
-        boolean ultraLongPath = startPose.getX() > 5.5;
-        boolean left = startPose.getY() > 3;
+    public void setTarget(Pose2d startPose, AutoAimLocation location, Alliance alliance) {
+        double fieldLengthMeters = 16.5; 
+        double blueLongThreshold = 2.85;
+        double blueUltraThreshold = 5.5;
+        double blueLeftThreshold = 3;
+        double blueScoringX = 1.85;
+        Translation2d blueLeftLongInterPoint = new Translation2d(2.6, 4.5);
+        Translation2d blueRightLongInterPoint = new Translation2d(2.65, 1.35);
+        Translation2d blueLeftUltraInterPoint = new Translation2d(4.5, 4.7);
+        Translation2d blueRightUltraInterPoint = new Translation2d(4.5, 1.15);
+
+        Rotation2d defaultRotation = alliance == Alliance.Blue ? Rotation2d.fromDegrees(180) : Rotation2d.fromDegrees(0);
+        
+        boolean longPath = startPose.getX() > blueLongThreshold;
+        boolean ultraLongPath = startPose.getX() > blueUltraThreshold;
+        boolean left = startPose.getY() > blueLeftThreshold;
+        double scoringX = blueScoringX;
+
+        Translation2d leftLongInterPoint = blueLeftLongInterPoint;
+        Translation2d rightLongInterPoint = blueRightLongInterPoint;
+        Translation2d leftUltraInterPoint = blueLeftUltraInterPoint;
+        Translation2d rightUltraInterPoint = blueRightUltraInterPoint;
+        if(alliance == Alliance.Red) {
+            longPath = startPose.getX() < fieldLengthMeters - blueLongThreshold;
+            ultraLongPath = startPose.getX() < fieldLengthMeters - blueUltraThreshold;
+            left = startPose.getY() < blueLeftThreshold;
+
+            leftLongInterPoint = new Translation2d(fieldLengthMeters - blueLeftLongInterPoint.getX(), blueRightLongInterPoint.getY());
+            rightLongInterPoint = new Translation2d(fieldLengthMeters - blueLeftLongInterPoint.getX(), blueLeftLongInterPoint.getY());
+            leftUltraInterPoint = new Translation2d(fieldLengthMeters - blueLeftUltraInterPoint.getX(), blueRightUltraInterPoint.getY());
+            rightUltraInterPoint = new Translation2d(fieldLengthMeters - blueLeftUltraInterPoint.getX(), blueLeftUltraInterPoint.getY());
+
+            scoringX = fieldLengthMeters - blueScoringX;
+        }
+
         Pose2d start, end;
         List<Translation2d> interPoints = new ArrayList<Translation2d>();
 
-        Translation2d leftLongInterPoint = new Translation2d(2.6, 4.5);
-        Translation2d rightLongInterPoint = new Translation2d(2.65, 1.35);
-        Translation2d leftUltraInterPoint = new Translation2d(4.5, 4.7);
-        Translation2d rightUltraInterPoint = new Translation2d(4.5, 1.15);
+        start = new Pose2d(startPose.getX(), startPose.getY(), defaultRotation);
+        end = new Pose2d(scoringX, getYOfAutoAimLocation(location, alliance), defaultRotation);
 
-        start = new Pose2d(startPose.getX(), startPose.getY(), Rotation2d.fromDegrees(180));
-        end = new Pose2d(2.323, getYOfAutoAimLocation(location), Rotation2d.fromDegrees(180));
+        // maybe check
         if(!longPath) {
             start = new Pose2d(start.getX(), start.getY(), new Rotation2d(end.getX() - start.getX(), end.getY() - start.getY()));
         }
@@ -148,10 +178,11 @@ public class AutoAimController {
 
         end = new Pose2d(end.getX(), end.getY(), new Rotation2d(end.getX() - secondToLastPoint.getX(), end.getY() - secondToLastPoint.getY()));
 
+        int rotationMult = alliance == Alliance.Blue ? 1 : -1;
         if(secondToLastPoint.getY() > end.getY()) {
-            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() - 30));
+            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() - (30 * rotationMult)));
         } else if(secondToLastPoint.getY() < end.getY()) {
-            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() + 30));
+            end = new Pose2d(end.getX(), end.getY(), Rotation2d.fromDegrees(end.getRotation().getDegrees() + (30 * rotationMult)));
         }
 
         setTarget(start, interPoints, end, mEndHeading);
@@ -248,26 +279,26 @@ public class AutoAimController {
         mEndHeading = endHeading;
     }
 
-    private double getYOfAutoAimLocation(AutoAimLocation location) {
+    private double getYOfAutoAimLocation(AutoAimLocation location, Alliance alliance) {
         switch(location) {
             case LL:
-                return 0;
+                return alliance == Alliance.Blue ? 0 : 1;
             case LM:
-                return 4.5;
+                return alliance == Alliance.Blue ? 4.5 : 1.5;
             case LR:
-                return 4;
+                return alliance == Alliance.Blue ? 4 : 2;
             case ML:
-                return 3.5;
+                return alliance == Alliance.Blue ? 3.5 : 2.5;
             case MM:
                 return 3;
             case MR:
-                return 2.5;
+                return alliance == Alliance.Blue ? 2.5 : 3.5;
             case RL:
-                return 2;
+                return alliance == Alliance.Blue ? 2 : 4;
             case RM:
-                return 1.5;
+                return alliance == Alliance.Blue ? 1.5 : 4.5;
             case RR:
-                return 1;
+                return alliance == Alliance.Blue ? 1 : 0;
             default:
                 return 0;
         }

@@ -16,6 +16,7 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.AutoAimController.AutoAimLocation;
@@ -108,6 +109,8 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {}
 
+    Alliance alliance = Alliance.Red;
+
     XboxController joystick = new XboxController(0);
 
     PIDController xController = new PIDController(0, 0, 0);
@@ -139,7 +142,7 @@ public class Robot extends TimedRobot {
         if(joystick.getRawButton(1) && !wasPreviouslyPressed) {
             wasPreviouslyPressed = true;
             Pose2d currPose = controller.getField().getRobotPose();
-            controller.setTarget(currPose, AutoAimLocation.MM);
+            controller.setTarget(currPose, AutoAimLocation.MM, alliance);
             controller.enable(true);
         }
         if(!joystick.getRawButton(1)) {

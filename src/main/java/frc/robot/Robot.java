@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.AutoAimController.AutoAimLocation;
+import frc.robot.AutoAimController.LoadingLocation;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -109,7 +110,7 @@ public class Robot extends TimedRobot {
     @Override
     public void testPeriodic() {}
 
-    Alliance alliance = Alliance.Red;
+    Alliance alliance = Alliance.Blue;
 
     XboxController joystick = new XboxController(0);
 
@@ -142,7 +143,8 @@ public class Robot extends TimedRobot {
         if(joystick.getRawButton(1) && !wasPreviouslyPressed) {
             wasPreviouslyPressed = true;
             Pose2d currPose = controller.getField().getRobotPose();
-            controller.setTarget(currPose, AutoAimLocation.MM, alliance);
+            // controller.setTarget(currPose, AutoAimLocation.MM, alliance);
+            controller.setTarget(currPose, LoadingLocation.WALL_LOAD, alliance);
             controller.enable(true);
         }
         if(!joystick.getRawButton(1)) {

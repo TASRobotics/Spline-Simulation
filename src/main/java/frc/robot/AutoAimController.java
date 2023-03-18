@@ -8,12 +8,12 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.ADXL345_I2C.AllAxes;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,6 +22,10 @@ public class AutoAimController {
     public enum AutoAimLocation {
         LL, LM, LR, ML, MM, MR, RL, RM, RR,
         R_LOAD, L_LOAD
+    };
+
+    public enum LoadingLocation {
+        WALL_LOAD, SCORING_LOAD
     };
 
     private PIDController mXController, mYController;
@@ -97,6 +101,39 @@ public class AutoAimController {
         );
         field.getObject("traj").setTrajectory(traj);
         followPath(traj, endHeading);
+    }
+
+    public void setTarget(Pose2d startPose, LoadingLocation location, Alliance alliance) {
+        List<Translation2d> interPoints = new ArrayList<Translation2d>();
+
+        Rotation2d blueEndHeading = new Rotation2d(180);
+        Rotation2d redEndHeading = new Rotation2d(0);
+
+        double fieldLengthMeters = 16.5; 
+        double wallY = 7.2;
+        double scoringY = 6.0;
+
+        double blueThresholdX = 12.0;
+        double blueFinalX = 14.6;
+        double finalY = location == LoadingLocation.WALL_LOAD ? wallY : scoringY;
+
+        Pose2d endPose = new Pose2d(blueFinalX, finalY, new Rotation2d(0));
+        if(alliance == Alliance.Red) {
+            endPose = new Pose2d(fieldLengthMeters - blueFinalX, finalY, new Rotation2d(180));
+        }
+
+        // if(alliance == Alliance.Blue){
+        //     if(startPose.getX() < blueThresholdX) {
+        //         interPoints.add(new Translation2d(blueThresholdX, endPose.getY()));
+        //     }
+        // } else if(alliance == Alliance.Red) {
+        //     if(startPose.getX() > fieldLengthMeters - blueThresholdX) {
+        //         interPoints.add(new Translation2d(blueThresholdX, endPose.getY()));
+        //     }
+        // }
+
+        Rotation2d endHeading = alliance == Alliance.Blue ? blueEndHeading : redEndHeading;
+        setTarget(startPose, interPoints, endPose, endHeading);
     }
 
     /**
